@@ -644,15 +644,6 @@ function App() {
             <span>Se connecter</span>
           </button>
         </form>
-        
-        <div className="login-info">
-          <div className="info-card">
-            <h4>Compte de test</h4>
-            <p><strong>Nom d'utilisateur:</strong> admin</p>
-            <p><strong>Mot de passe:</strong> admin123</p>
-            <p><strong>Rôle:</strong> Créateur (accès complet)</p>
-          </div>
-        </div>
       </div>
     </div>
   );
