@@ -414,7 +414,6 @@ function App() {
         >
           <span className="category-icon">👥</span>
           <span className="category-name">Joueurs</span>
-          <span className="category-count">{gears.filter(g => g.category === 'joueurs').length}</span>
         </button>
         
         <button 
@@ -423,7 +422,6 @@ function App() {
         >
           <span className="category-icon">🛡️</span>
           <span className="category-name">Modérateur</span>
-          <span className="category-count">{gears.filter(g => g.category === 'moderateur').length}</span>
         </button>
         
         <button 
@@ -432,7 +430,6 @@ function App() {
         >
           <span className="category-icon">🎉</span>
           <span className="category-name">Événements</span>
-          <span className="category-count">{gears.filter(g => g.category === 'evenements').length}</span>
         </button>
         
         <button 
@@ -441,7 +438,6 @@ function App() {
         >
           <span className="category-icon">🚫</span>
           <span className="category-name">Interdits</span>
-          <span className="category-count">{gears.filter(g => g.category === 'interdits').length}</span>
         </button>
       </div>
     </div>
