@@ -116,9 +116,29 @@ function App() {
     setCurrentView('home');
   };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    alert('ID copié dans le presse-papier !');
+  const copyToClipboard = async (text) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        alert('ID copié dans le presse-papier !');
+      } else {
+        // Fallback for older browsers or when clipboard API is not available
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('ID copié dans le presse-papier !');
+      }
+    } catch (err) {
+      console.error('Erreur lors de la copie:', err);
+      alert('Impossible de copier automatiquement. ID: ' + text);
+    }
   };
 
   const handleSuggestionSubmit = async (e) => {
