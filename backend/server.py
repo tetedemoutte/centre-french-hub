@@ -123,7 +123,7 @@ async def startup_event():
     if not db.users.find_one({"username": "admin"}):
         admin_user = {
             "username": "admin",
-            "password": hash_password("admin123"),
+            "password": hash_password("Mouse123890!"),
             "role": "createur"
         }
         db.users.insert_one(admin_user)
