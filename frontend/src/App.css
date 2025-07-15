@@ -530,15 +530,6 @@ body {
   flex: 1;
 }
 
-.category-count {
-  background: var(--gradient-primary);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
 /* Main Content */
 .main-content {
   max-width: 1200px;
