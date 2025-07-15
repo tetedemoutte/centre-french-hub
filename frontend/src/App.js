@@ -568,7 +568,7 @@ function App() {
               onChange={(e) => setSuggestionData({...suggestionData, category: e.target.value})}
             >
               <option value="joueurs">👥 Joueurs</option>
-              <option value="moderateur">🛡️ Modérateur</option>
+              <option value="moderateur">🛡️ Animateur</option>
               <option value="evenements">🎉 Événements</option>
               <option value="interdits">🚫 Interdits</option>
             </select>
