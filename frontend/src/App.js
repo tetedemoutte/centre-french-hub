@@ -568,7 +568,7 @@ function App() {
               onChange={(e) => setSuggestionData({...suggestionData, category: e.target.value})}
             >
               <option value="joueurs">👥 Joueurs</option>
-              <option value="moderateur">🛡️ Animateur</option>
+              <option value="moderateur">🛡️ Modérateur</option>
               <option value="evenements">🎉 Événements</option>
               <option value="interdits">🚫 Interdits</option>
             </select>
@@ -748,7 +748,7 @@ function App() {
                     value={newUserData.role}
                     onChange={(e) => setNewUserData({...newUserData, role: e.target.value})}
                   >
-                    <option value="moderateur">🛡️ Modérateur</option>
+                    <option value="moderateur">🛡️ Animateur</option>
                     {user.role === 'createur' && <option value="responsable">👑 Responsable</option>}
                   </select>
                 </div>
