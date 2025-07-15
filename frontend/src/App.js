@@ -12,6 +12,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [user, setUser] = useState(null);
   const [authToken, setAuthToken] = useState(localStorage.getItem('authToken'));
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   // Auth states
   const [loginData, setLoginData] = useState({ username: '', password: '' });
@@ -28,7 +29,6 @@ function App() {
   // Load user data on component mount
   useEffect(() => {
     if (authToken) {
-      // Decode token to get user info (simplified - in production use proper JWT decoding)
       try {
         const payload = JSON.parse(atob(authToken.split('.')[1]));
         setUser({ username: payload.username, role: payload.role });
@@ -98,7 +98,6 @@ function App() {
         setAuthToken(data.access_token);
         localStorage.setItem('authToken', data.access_token);
         
-        // Decode token to set user properly
         try {
           const payload = JSON.parse(atob(data.access_token.split('.')[1]));
           setUser({ username: payload.username, role: payload.role });
@@ -108,7 +107,10 @@ function App() {
         
         setCurrentView('admin');
         setLoginData({ username: '', password: '' });
-        alert('Connexion réussie !');
+        
+        // Success animation
+        document.body.classList.add('success-flash');
+        setTimeout(() => document.body.classList.remove('success-flash'), 1000);
       } else {
         const errorData = await response.json();
         alert(errorData.detail || 'Nom d\'utilisateur ou mot de passe incorrect');
@@ -130,9 +132,8 @@ function App() {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text);
-        alert('ID copié dans le presse-papier !');
+        showNotification('✅ ID copié dans le presse-papier !', 'success');
       } else {
-        // Fallback for older browsers or when clipboard API is not available
         const textArea = document.createElement('textarea');
         textArea.value = text;
         textArea.style.position = 'fixed';
@@ -143,12 +144,28 @@ function App() {
         textArea.select();
         document.execCommand('copy');
         document.body.removeChild(textArea);
-        alert('ID copié dans le presse-papier !');
+        showNotification('✅ ID copié dans le presse-papier !', 'success');
       }
     } catch (err) {
       console.error('Erreur lors de la copie:', err);
-      alert('Impossible de copier automatiquement. ID: ' + text);
+      showNotification('❌ Impossible de copier: ' + text, 'error');
     }
+  };
+
+  const showNotification = (message, type) => {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+      notification.classList.remove('show');
+      setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
   };
 
   const handleSuggestionSubmit = async (e) => {
@@ -163,7 +180,7 @@ function App() {
       });
       
       if (response.ok) {
-        alert('Suggestion soumise avec succès !');
+        showNotification('🎉 Suggestion soumise avec succès !', 'success');
         setSuggestionData({
           name: '',
           nickname: '',
@@ -173,36 +190,11 @@ function App() {
           category: 'joueurs'
         });
       } else {
-        alert('Erreur lors de la soumission');
+        showNotification('❌ Erreur lors de la soumission', 'error');
       }
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors de la soumission');
-    }
-  };
-
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/create-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify(newUserData)
-      });
-      
-      if (response.ok) {
-        alert('Utilisateur créé avec succès !');
-        setNewUserData({ username: '', password: '', role: 'moderateur' });
-      } else {
-        const errorData = await response.json();
-        alert(errorData.detail || 'Erreur lors de la création de l\'utilisateur');
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la création de l\'utilisateur');
+      showNotification('❌ Erreur lors de la soumission', 'error');
     }
   };
 
@@ -216,10 +208,10 @@ function App() {
       });
       
       if (response.ok) {
-        alert('Suggestion approuvée et gear créé !');
+        showNotification('✅ Suggestion approuvée et gear créé !', 'success');
         loadSuggestions();
       } else {
-        alert('Erreur lors de l\'approbation');
+        showNotification('❌ Erreur lors de l\'approbation', 'error');
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -236,10 +228,10 @@ function App() {
       });
       
       if (response.ok) {
-        alert('Suggestion rejetée');
+        showNotification('⚠️ Suggestion rejetée', 'warning');
         loadSuggestions();
       } else {
-        alert('Erreur lors du rejet');
+        showNotification('❌ Erreur lors du rejet', 'error');
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -258,13 +250,38 @@ function App() {
       });
       
       if (response.ok) {
-        alert('Gear supprimé avec succès !');
+        showNotification('🗑️ Gear supprimé avec succès !', 'success');
         loadGears();
       } else {
-        alert('Erreur lors de la suppression');
+        showNotification('❌ Erreur lors de la suppression', 'error');
       }
     } catch (error) {
       console.error('Erreur:', error);
+    }
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/create-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(newUserData)
+      });
+      
+      if (response.ok) {
+        showNotification('👤 Utilisateur créé avec succès !', 'success');
+        setNewUserData({ username: '', password: '', role: 'moderateur' });
+      } else {
+        const errorData = await response.json();
+        showNotification(errorData.detail || 'Erreur lors de la création de l\'utilisateur', 'error');
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      showNotification('❌ Erreur lors de la création de l\'utilisateur', 'error');
     }
   };
 
@@ -272,118 +289,203 @@ function App() {
     <header className={`header ${isDarkMode ? 'dark' : 'light'}`}>
       <div className="header-content">
         <div className="logo-section">
-          <img 
-            src="https://i.imgur.com/XZWXmBV.png" 
-            alt="Center French" 
-            className="logo"
-          />
-          <h1>Center French - Suggestions Gears</h1>
+          <div className="logo-container">
+            <img 
+              src="https://i.imgur.com/XZWXmBV.png" 
+              alt="Center French" 
+              className="logo"
+            />
+            <div className="logo-glow"></div>
+          </div>
+          <div className="brand-info">
+            <h1>Center French</h1>
+            <p>Suggestions de Gears Roblox</p>
+          </div>
         </div>
+        
         <div className="header-actions">
           <button 
             className="theme-toggle"
             onClick={() => setIsDarkMode(!isDarkMode)}
+            title={isDarkMode ? 'Mode clair' : 'Mode sombre'}
           >
-            {isDarkMode ? '☀️' : '🌙'}
+            {isDarkMode ? '🌞' : '🌙'}
           </button>
+          
           {user ? (
             <div className="user-section">
-              <span>Bonjour, {user.username} ({user.role})</span>
-              <button onClick={handleLogout} className="logout-btn">Déconnexion</button>
+              <div className="user-info">
+                <div className="user-avatar">
+                  {user.username.charAt(0).toUpperCase()}
+                </div>
+                <div className="user-details">
+                  <span className="username">{user.username}</span>
+                  <span className="user-role">{user.role}</span>
+                </div>
+              </div>
+              <button onClick={handleLogout} className="logout-btn">
+                Déconnexion
+              </button>
             </div>
           ) : null}
+          
+          <button 
+            className="mobile-menu-toggle"
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+          >
+            ☰
+          </button>
         </div>
       </div>
     </header>
   );
 
   const renderNavigation = () => (
-    <nav className={`navigation ${isDarkMode ? 'dark' : 'light'}`}>
-      <button 
-        className={currentView === 'home' ? 'active' : ''}
-        onClick={() => setCurrentView('home')}
-      >
-        🏠 Accueil
-      </button>
-      <button 
-        className={currentView === 'suggest' ? 'active' : ''}
-        onClick={() => setCurrentView('suggest')}
-      >
-        💡 Faire une suggestion
-      </button>
-      <button 
-        className={currentView === 'login' ? 'active' : ''}
-        onClick={() => setCurrentView('login')}
-      >
-        🔐 Connexion Admin
-      </button>
-      {user && (
+    <nav className={`navigation ${isDarkMode ? 'dark' : 'light'} ${showMobileMenu ? 'show-mobile' : ''}`}>
+      <div className="nav-container">
         <button 
-          className={currentView === 'admin' ? 'active' : ''}
-          onClick={() => setCurrentView('admin')}
+          className={`nav-btn ${currentView === 'home' ? 'active' : ''}`}
+          onClick={() => { setCurrentView('home'); setShowMobileMenu(false); }}
         >
-          ⚙️ Panel Admin
+          <span className="nav-icon">🏠</span>
+          <span>Accueil</span>
         </button>
-      )}
+        
+        <button 
+          className={`nav-btn ${currentView === 'suggest' ? 'active' : ''}`}
+          onClick={() => { setCurrentView('suggest'); setShowMobileMenu(false); }}
+        >
+          <span className="nav-icon">💡</span>
+          <span>Suggestions</span>
+        </button>
+        
+        <button 
+          className={`nav-btn ${currentView === 'login' ? 'active' : ''}`}
+          onClick={() => { setCurrentView('login'); setShowMobileMenu(false); }}
+        >
+          <span className="nav-icon">🔐</span>
+          <span>Admin</span>
+        </button>
+        
+        {user && (
+          <button 
+            className={`nav-btn ${currentView === 'admin' ? 'active' : ''}`}
+            onClick={() => { setCurrentView('admin'); setShowMobileMenu(false); }}
+          >
+            <span className="nav-icon">⚙️</span>
+            <span>Panel</span>
+          </button>
+        )}
+      </div>
     </nav>
   );
 
+  const renderHero = () => (
+    <div className="hero-section">
+      <div className="hero-background"></div>
+      <div className="hero-content">
+        <h2>Découvrez les Gears Roblox</h2>
+        <p>Explorez, suggérez et gérez les gears pour Center French</p>
+        <div className="hero-stats">
+          <div className="stat">
+            <span className="stat-number">{gears.length}</span>
+            <span className="stat-label">Gears</span>
+          </div>
+          <div className="stat">
+            <span className="stat-number">4</span>
+            <span className="stat-label">Catégories</span>
+          </div>
+          <div className="stat">
+            <span className="stat-number">{suggestions.length}</span>
+            <span className="stat-label">Suggestions</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderCategoryButtons = () => (
-    <div className="category-buttons">
-      <button 
-        className={selectedCategory === 'joueurs' ? 'active' : ''}
-        onClick={() => setSelectedCategory('joueurs')}
-      >
-        👥 Joueurs
-      </button>
-      <button 
-        className={selectedCategory === 'moderateur' ? 'active' : ''}
-        onClick={() => setSelectedCategory('moderateur')}
-      >
-        🛡️ Modérateur
-      </button>
-      <button 
-        className={selectedCategory === 'evenements' ? 'active' : ''}
-        onClick={() => setSelectedCategory('evenements')}
-      >
-        🎉 Événements
-      </button>
-      <button 
-        className={selectedCategory === 'interdits' ? 'active' : ''}
-        onClick={() => setSelectedCategory('interdits')}
-      >
-        🚫 Interdits
-      </button>
+    <div className="category-section">
+      <h3>Catégories de Gears</h3>
+      <div className="category-buttons">
+        <button 
+          className={`category-btn ${selectedCategory === 'joueurs' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('joueurs')}
+        >
+          <span className="category-icon">👥</span>
+          <span className="category-name">Joueurs</span>
+          <span className="category-count">{gears.filter(g => g.category === 'joueurs').length}</span>
+        </button>
+        
+        <button 
+          className={`category-btn ${selectedCategory === 'moderateur' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('moderateur')}
+        >
+          <span className="category-icon">🛡️</span>
+          <span className="category-name">Modérateur</span>
+          <span className="category-count">{gears.filter(g => g.category === 'moderateur').length}</span>
+        </button>
+        
+        <button 
+          className={`category-btn ${selectedCategory === 'evenements' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('evenements')}
+        >
+          <span className="category-icon">🎉</span>
+          <span className="category-name">Événements</span>
+          <span className="category-count">{gears.filter(g => g.category === 'evenements').length}</span>
+        </button>
+        
+        <button 
+          className={`category-btn ${selectedCategory === 'interdits' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('interdits')}
+        >
+          <span className="category-icon">🚫</span>
+          <span className="category-name">Interdits</span>
+          <span className="category-count">{gears.filter(g => g.category === 'interdits').length}</span>
+        </button>
+      </div>
     </div>
   );
 
   const renderGearCard = (gear) => (
     <div key={gear.id} className={`gear-card ${isDarkMode ? 'dark' : 'light'}`}>
-      <div className="gear-image">
-        <img src={gear.image_url} alt={gear.name} />
+      <div className="gear-header">
+        <div className="gear-image">
+          <img src={gear.image_url} alt={gear.name} />
+          <div className="gear-overlay"></div>
+        </div>
+        <div className="gear-badge">
+          <span className="gear-id">#{gear.gear_id}</span>
+        </div>
       </div>
-      <div className="gear-info">
-        <h3>{gear.name}</h3>
+      
+      <div className="gear-body">
+        <h3 className="gear-name">{gear.name}</h3>
         <p className="gear-nickname">"{gear.nickname}"</p>
-        <p className="gear-id">ID: {gear.gear_id}</p>
         <p className="gear-description">{gear.description}</p>
-        <div className="gear-actions">
-          {gear.category !== 'interdits' && (
-            <button 
-              className="copy-btn"
-              onClick={() => copyToClipboard(gear.gear_id)}
-            >
-              📋 Copier ID
-            </button>
-          )}
-          {user && user.role !== 'moderateur' && (
-            <button 
-              className="delete-btn"
-              onClick={() => handleDeleteGear(gear.id)}
-            >
-              🗑️ Supprimer
-            </button>
-          )}
+        
+        <div className="gear-footer">
+          <div className="gear-actions">
+            {gear.category !== 'interdits' && (
+              <button 
+                className="action-btn primary"
+                onClick={() => copyToClipboard(gear.gear_id)}
+              >
+                <span className="btn-icon">📋</span>
+                <span>Copier ID</span>
+              </button>
+            )}
+            
+            {user && user.role !== 'moderateur' && (
+              <button 
+                className="action-btn danger"
+                onClick={() => handleDeleteGear(gear.id)}
+              >
+                <span className="btn-icon">🗑️</span>
+                <span>Supprimer</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -391,169 +493,231 @@ function App() {
 
   const renderHome = () => (
     <div className="home-view">
-      <h2>Catégories de Gears</h2>
+      {renderHero()}
       {renderCategoryButtons()}
       
-      <div className="category-title">
-        <h3>
-          {selectedCategory === 'joueurs' && '👥 Gears Joueurs'}
-          {selectedCategory === 'moderateur' && '🛡️ Gears Modérateur'}
-          {selectedCategory === 'evenements' && '🎉 Gears Événements'}
-          {selectedCategory === 'interdits' && '🚫 Gears Interdits'}
-        </h3>
-      </div>
-
-      {loading ? (
-        <div className="loading">Chargement...</div>
-      ) : (
-        <div className="gears-grid">
-          {gears.map(renderGearCard)}
+      <div className="gears-section">
+        <div className="section-header">
+          <h3>
+            {selectedCategory === 'joueurs' && '👥 Gears Joueurs'}
+            {selectedCategory === 'moderateur' && '🛡️ Gears Modérateur'}
+            {selectedCategory === 'evenements' && '🎉 Gears Événements'}
+            {selectedCategory === 'interdits' && '🚫 Gears Interdits'}
+          </h3>
+          <div className="gear-count">{gears.length} gears</div>
         </div>
-      )}
+
+        {loading ? (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Chargement des gears...</p>
+          </div>
+        ) : (
+          <div className="gears-grid">
+            {gears.map(renderGearCard)}
+          </div>
+        )}
+      </div>
     </div>
   );
 
   const renderSuggestionForm = () => (
-    <div className="suggestion-form">
-      <h2>💡 Faire une suggestion de gear</h2>
-      <form onSubmit={handleSuggestionSubmit}>
-        <div className="form-group">
-          <label>Nom du gear:</label>
-          <input 
-            type="text" 
-            value={suggestionData.name}
-            onChange={(e) => setSuggestionData({...suggestionData, name: e.target.value})}
-            required
-          />
+    <div className="suggestion-form-container">
+      <div className="form-header">
+        <h2>💡 Faire une suggestion</h2>
+        <p>Proposez un nouveau gear pour Center French</p>
+      </div>
+      
+      <form onSubmit={handleSuggestionSubmit} className="suggestion-form">
+        <div className="form-row">
+          <div className="form-group">
+            <label>Nom du gear</label>
+            <input 
+              type="text" 
+              value={suggestionData.name}
+              onChange={(e) => setSuggestionData({...suggestionData, name: e.target.value})}
+              placeholder="Ex: Épée de Cristal"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Surnom</label>
+            <input 
+              type="text" 
+              value={suggestionData.nickname}
+              onChange={(e) => setSuggestionData({...suggestionData, nickname: e.target.value})}
+              placeholder="Ex: Cristal Blade"
+              required
+            />
+          </div>
+        </div>
+        
+        <div className="form-row">
+          <div className="form-group">
+            <label>ID du gear</label>
+            <input 
+              type="text" 
+              value={suggestionData.gear_id}
+              onChange={(e) => setSuggestionData({...suggestionData, gear_id: e.target.value})}
+              placeholder="Ex: 123456789"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Catégorie</label>
+            <select 
+              value={suggestionData.category}
+              onChange={(e) => setSuggestionData({...suggestionData, category: e.target.value})}
+            >
+              <option value="joueurs">👥 Joueurs</option>
+              <option value="moderateur">🛡️ Modérateur</option>
+              <option value="evenements">🎉 Événements</option>
+              <option value="interdits">🚫 Interdits</option>
+            </select>
+          </div>
         </div>
         
         <div className="form-group">
-          <label>Surnom:</label>
-          <input 
-            type="text" 
-            value={suggestionData.nickname}
-            onChange={(e) => setSuggestionData({...suggestionData, nickname: e.target.value})}
-            required
-          />
-        </div>
-        
-        <div className="form-group">
-          <label>ID du gear:</label>
-          <input 
-            type="text" 
-            value={suggestionData.gear_id}
-            onChange={(e) => setSuggestionData({...suggestionData, gear_id: e.target.value})}
-            required
-          />
-        </div>
-        
-        <div className="form-group">
-          <label>URL de l'image:</label>
+          <label>URL de l'image</label>
           <input 
             type="url" 
             value={suggestionData.image_url}
             onChange={(e) => setSuggestionData({...suggestionData, image_url: e.target.value})}
+            placeholder="https://example.com/image.png"
             required
           />
         </div>
         
         <div className="form-group">
-          <label>Description:</label>
+          <label>Description</label>
           <textarea 
             value={suggestionData.description}
             onChange={(e) => setSuggestionData({...suggestionData, description: e.target.value})}
+            placeholder="Décrivez le gear et son utilité..."
             required
           />
         </div>
         
-        <div className="form-group">
-          <label>Catégorie:</label>
-          <select 
-            value={suggestionData.category}
-            onChange={(e) => setSuggestionData({...suggestionData, category: e.target.value})}
-          >
-            <option value="joueurs">Joueurs</option>
-            <option value="moderateur">Modérateur</option>
-            <option value="evenements">Événements</option>
-            <option value="interdits">Interdits</option>
-          </select>
-        </div>
-        
-        <button type="submit" className="submit-btn">Soumettre la suggestion</button>
+        <button type="submit" className="submit-btn">
+          <span className="btn-icon">📝</span>
+          <span>Soumettre la suggestion</span>
+        </button>
       </form>
     </div>
   );
 
   const renderLoginForm = () => (
-    <div className="login-form">
-      <h2>🔐 Connexion Administrateur</h2>
-      <form onSubmit={handleLogin}>
-        <div className="form-group">
-          <label>Nom d'utilisateur:</label>
-          <input 
-            type="text" 
-            value={loginData.username}
-            onChange={(e) => setLoginData({...loginData, username: e.target.value})}
-            required
-          />
+    <div className="login-container">
+      <div className="login-card">
+        <div className="login-header">
+          <h2>🔐 Connexion Administrateur</h2>
+          <p>Accédez au panel d'administration</p>
         </div>
         
-        <div className="form-group">
-          <label>Mot de passe:</label>
-          <input 
-            type="password" 
-            value={loginData.password}
-            onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-            required
-          />
-        </div>
+        <form onSubmit={handleLogin} className="login-form">
+          <div className="form-group">
+            <label>Nom d'utilisateur</label>
+            <input 
+              type="text" 
+              value={loginData.username}
+              onChange={(e) => setLoginData({...loginData, username: e.target.value})}
+              placeholder="Entrez votre nom d'utilisateur"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Mot de passe</label>
+            <input 
+              type="password" 
+              value={loginData.password}
+              onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+              placeholder="Entrez votre mot de passe"
+              required
+            />
+          </div>
+          
+          <button type="submit" className="submit-btn">
+            <span className="btn-icon">🔑</span>
+            <span>Se connecter</span>
+          </button>
+        </form>
         
-        <button type="submit" className="submit-btn">Se connecter</button>
-      </form>
-      
-      <div className="login-info">
-        <p><strong>Compte de test:</strong></p>
-        <p>Nom d'utilisateur: admin</p>
-        <p>Mot de passe: admin123</p>
+        <div className="login-info">
+          <div className="info-card">
+            <h4>Compte de test</h4>
+            <p><strong>Nom d'utilisateur:</strong> admin</p>
+            <p><strong>Mot de passe:</strong> admin123</p>
+            <p><strong>Rôle:</strong> Créateur (accès complet)</p>
+          </div>
+        </div>
       </div>
     </div>
   );
 
   const renderAdminPanel = () => (
     <div className="admin-panel">
-      <h2>⚙️ Panel Administrateur</h2>
+      <div className="panel-header">
+        <h2>⚙️ Panel Administrateur</h2>
+        <div className="admin-stats">
+          <div className="admin-stat">
+            <span className="stat-value">{suggestions.filter(s => s.status === 'pending').length}</span>
+            <span className="stat-label">Suggestions en attente</span>
+          </div>
+          <div className="admin-stat">
+            <span className="stat-value">{gears.length}</span>
+            <span className="stat-label">Gears totaux</span>
+          </div>
+        </div>
+      </div>
       
       <div className="admin-sections">
         <div className="suggestions-section">
           <h3>📝 Suggestions en attente</h3>
           {suggestions.filter(s => s.status === 'pending').length === 0 ? (
-            <p>Aucune suggestion en attente</p>
+            <div className="empty-state">
+              <div className="empty-icon">📭</div>
+              <h4>Aucune suggestion en attente</h4>
+              <p>Toutes les suggestions ont été traitées</p>
+            </div>
           ) : (
             <div className="suggestions-grid">
               {suggestions.filter(s => s.status === 'pending').map(suggestion => (
                 <div key={suggestion.id} className={`suggestion-card ${isDarkMode ? 'dark' : 'light'}`}>
-                  <div className="suggestion-image">
-                    <img src={suggestion.image_url} alt={suggestion.name} />
+                  <div className="suggestion-header">
+                    <div className="suggestion-image">
+                      <img src={suggestion.image_url} alt={suggestion.name} />
+                    </div>
+                    <div className="suggestion-badge">
+                      <span>#{suggestion.gear_id}</span>
+                    </div>
                   </div>
-                  <div className="suggestion-info">
+                  
+                  <div className="suggestion-body">
                     <h4>{suggestion.name}</h4>
                     <p className="suggestion-nickname">"{suggestion.nickname}"</p>
-                    <p className="suggestion-id">ID: {suggestion.gear_id}</p>
-                    <p className="suggestion-category">Catégorie: {suggestion.category}</p>
+                    <p className="suggestion-category">
+                      <span className="category-label">Catégorie:</span> {suggestion.category}
+                    </p>
                     <p className="suggestion-description">{suggestion.description}</p>
+                    
                     {user.role !== 'moderateur' && (
                       <div className="suggestion-actions">
                         <button 
-                          className="approve-btn"
+                          className="action-btn success"
                           onClick={() => handleApproveSuper(suggestion.id)}
                         >
-                          ✅ Approuver
+                          <span className="btn-icon">✅</span>
+                          <span>Approuver</span>
                         </button>
                         <button 
-                          className="reject-btn"
+                          className="action-btn danger"
                           onClick={() => handleRejectSuggestion(suggestion.id)}
                         >
-                          ❌ Rejeter
+                          <span className="btn-icon">❌</span>
+                          <span>Rejeter</span>
                         </button>
                       </div>
                     )}
@@ -567,39 +731,46 @@ function App() {
         {user.role !== 'moderateur' && (
           <div className="create-user-section">
             <h3>👤 Créer un utilisateur</h3>
-            <form onSubmit={handleCreateUser}>
-              <div className="form-group">
-                <label>Nom d'utilisateur:</label>
-                <input 
-                  type="text" 
-                  value={newUserData.username}
-                  onChange={(e) => setNewUserData({...newUserData, username: e.target.value})}
-                  required
-                />
+            <form onSubmit={handleCreateUser} className="user-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Nom d'utilisateur</label>
+                  <input 
+                    type="text" 
+                    value={newUserData.username}
+                    onChange={(e) => setNewUserData({...newUserData, username: e.target.value})}
+                    placeholder="Nom d'utilisateur"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Mot de passe</label>
+                  <input 
+                    type="password" 
+                    value={newUserData.password}
+                    onChange={(e) => setNewUserData({...newUserData, password: e.target.value})}
+                    placeholder="Mot de passe"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Rôle</label>
+                  <select 
+                    value={newUserData.role}
+                    onChange={(e) => setNewUserData({...newUserData, role: e.target.value})}
+                  >
+                    <option value="moderateur">🛡️ Modérateur</option>
+                    {user.role === 'createur' && <option value="responsable">👑 Responsable</option>}
+                  </select>
+                </div>
               </div>
               
-              <div className="form-group">
-                <label>Mot de passe:</label>
-                <input 
-                  type="password" 
-                  value={newUserData.password}
-                  onChange={(e) => setNewUserData({...newUserData, password: e.target.value})}
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Rôle:</label>
-                <select 
-                  value={newUserData.role}
-                  onChange={(e) => setNewUserData({...newUserData, role: e.target.value})}
-                >
-                  <option value="moderateur">Modérateur</option>
-                  {user.role === 'createur' && <option value="responsable">Responsable</option>}
-                </select>
-              </div>
-              
-              <button type="submit" className="submit-btn">Créer l'utilisateur</button>
+              <button type="submit" className="submit-btn">
+                <span className="btn-icon">➕</span>
+                <span>Créer l'utilisateur</span>
+              </button>
             </form>
           </div>
         )}
@@ -618,6 +789,13 @@ function App() {
         {currentView === 'login' && renderLoginForm()}
         {currentView === 'admin' && user && renderAdminPanel()}
       </main>
+      
+      <footer className={`footer ${isDarkMode ? 'dark' : 'light'}`}>
+        <div className="footer-content">
+          <p>&copy; 2024 Center French. Tous droits réservés.</p>
+          <p>Créé avec ❤️ pour la communauté Roblox</p>
+        </div>
+      </footer>
     </div>
   );
 }
