@@ -567,10 +567,7 @@ function App() {
         {user.role !== 'moderateur' && (
           <div className="create-user-section">
             <h3>👤 Créer un utilisateur</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              // Handle user creation
-            }}>
+            <form onSubmit={handleCreateUser}>
               <div className="form-group">
                 <label>Nom d'utilisateur:</label>
                 <input 
