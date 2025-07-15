@@ -97,11 +97,21 @@ function App() {
         const data = await response.json();
         setAuthToken(data.access_token);
         localStorage.setItem('authToken', data.access_token);
-        setUser({ username: loginData.username, role: data.role });
+        
+        // Decode token to set user properly
+        try {
+          const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+          setUser({ username: payload.username, role: payload.role });
+        } catch (e) {
+          setUser({ username: loginData.username, role: data.role });
+        }
+        
         setCurrentView('admin');
         setLoginData({ username: '', password: '' });
+        alert('Connexion réussie !');
       } else {
-        alert('Nom d\'utilisateur ou mot de passe incorrect');
+        const errorData = await response.json();
+        alert(errorData.detail || 'Nom d\'utilisateur ou mot de passe incorrect');
       }
     } catch (error) {
       console.error('Erreur de connexion:', error);
