@@ -577,8 +577,30 @@ function App() {
                 </select>
               </div>
               
-              <button type="submit" className="submit-btn">Créer l'utilisateur</button>
-            </form>
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/create-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(newUserData)
+      });
+      
+      if (response.ok) {
+        alert('Utilisateur créé avec succès !');
+        setNewUserData({ username: '', password: '', role: 'moderateur' });
+      } else {
+        const errorData = await response.json();
+        alert(errorData.detail || 'Erreur lors de la création de l\'utilisateur');
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la création de l\'utilisateur');
+    }
+  };
           </div>
         )}
       </div>
