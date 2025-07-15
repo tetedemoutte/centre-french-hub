@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'mongodb+srv://centerfrench:RH8muzTTVfGue4OY@cluster0.8chvt63.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
 function App() {
   const [currentView, setCurrentView] = useState('home');
